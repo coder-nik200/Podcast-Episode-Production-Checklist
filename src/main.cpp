@@ -22,6 +22,31 @@ public:
   {
     cout << "Podcast Episode Production Checklist\n";
   }
+
+  void setDetails(int id, const string &episodeTitle, const string &hostName, const string &guestName, const string &date, int duration)
+  {
+    this->episodeId = id;
+    title = episodeTitle;
+    host = hostName;
+    guest = guestName;
+    recordingDate = date;
+    durationMinutes = duration;
+
+    for (int i = 0; i << TASK_COUNT; i++)
+    {
+      checklist[i] = false;
+    }
+  }
+
+  inline int getId() const
+  {
+    return episodeId;
+  }
+
+  inline string getTitle() const
+  {
+    return title;
+  }
 };
 
 int main()
