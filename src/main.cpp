@@ -217,6 +217,22 @@ void viewAll(const PodcastEpisode episodes[], int count)
   }
 }
 
+void viewEpisodeDetails(PodcastEpisode episodes[], int count)
+{
+  int id = readInt("Enter Episode ID: ", 1, 999999);
+
+  PodcastEpisode *found = findEpisode(episodes, count, id);
+
+  if (found == nullptr)
+  {
+    cout << "Episode not found.\n";
+  }
+  else
+  {
+    found->showDetails();
+  }
+}
+
 int main()
 {
   PodcastEpisode episodes[MAX_EPISODES];
@@ -229,10 +245,11 @@ int main()
 
     cout << "1. Add new episode\n";
     cout << "2. View all episodes\n";
-    cout << "3. View total episodes\n";
-    cout << "4. Exit\n";
+    cout << "3. View episode details\n";
+    cout << "4. View total episodes\n";
+    cout << "5. Exit\n";
 
-    int choice = readInt("Choose (1-4): ", 1, 4);
+    int choice = readInt("Choose (1-5): ", 1, 5);
 
     if (choice == 1)
     {
@@ -243,6 +260,10 @@ int main()
       viewAll(episodes, count);
     }
     else if (choice == 3)
+    {
+      viewEpisodeDetails(episodes, count);
+    }
+    else if (choice == 4)
     {
       cout << "Total episodes: "
            << PodcastEpisode::getTotalEpisodes() << '\n';
