@@ -6,6 +6,16 @@ using namespace std;
 const int MAX_EPISODES = 30;
 const int TASK_COUNT = 8;
 
+const string TASK_NAMES[TASK_COUNT] = {
+    "Topic Research",
+    "Script Preparation",
+    "Guest Confirmation",
+    "Recording Completed",
+    "Audio Editing",
+    "Thumbnail Preparation",
+    "Final Review",
+    "Publishing"};
+
 class PodcastEpisode
 {
 private:
@@ -20,7 +30,6 @@ private:
   static int totalEpisodes;
 
 public:
-  // Set episode details
   void setDetails(int id, const string &episodeTitle,
                   const string &hostName,
                   const string &guestName,
@@ -73,9 +82,43 @@ public:
          << "\nRecording date: " << recordingDate
          << "\nDuration: " << durationMinutes << " minutes\n";
   }
+
+  void showChecklist() const
+  {
+    cout << "\nChecklist for Episode "
+         << episodeId << " (" << title << ")\n";
+
+    for (int i = 0; i < TASK_COUNT; i++)
+    {
+      cout << i + 1 << ". ["
+           << (checklist[i] ? 'X' : ' ')
+           << "] " << TASK_NAMES[i] << '\n';
+    }
+
+    cout << "Checklist is read-only in CA1.\n";
+  }
+
+  friend void displayProductionStatus(const PodcastEpisode &episode);
 };
 
 int PodcastEpisode::totalEpisodes = 0;
+
+void displayProductionStatus(const PodcastEpisode &episode)
+{
+  int completed = 0;
+
+  for (int i = 0; i < TASK_COUNT; i++)
+  {
+    if (episode.checklist[i])
+    {
+      completed++;
+    }
+  }
+
+  cout << "Production progress: "
+       << completed << "/" << TASK_COUNT
+       << " tasks complete\n";
+}
 
 int readInt(const string &prompt, int minimum, int maximum)
 {
@@ -233,6 +276,24 @@ void viewEpisodeDetails(PodcastEpisode episodes[], int count)
   }
 }
 
+void viewChecklist(PodcastEpisode episodes[], int count)
+{
+  int id = readInt("Enter Episode ID: ", 1, 999999);
+
+  PodcastEpisode *found = findEpisode(episodes, count, id);
+
+  if (found == nullptr)
+  {
+    cout << "Episode not found.\n";
+  }
+  else
+  {
+    found->showChecklist();
+
+    displayProductionStatus(*found);
+  }
+}
+
 int main()
 {
   PodcastEpisode episodes[MAX_EPISODES];
@@ -246,10 +307,11 @@ int main()
     cout << "1. Add new episode\n";
     cout << "2. View all episodes\n";
     cout << "3. View episode details\n";
-    cout << "4. View total episodes\n";
-    cout << "5. Exit\n";
+    cout << "4. View production checklist\n";
+    cout << "5. View total episodes\n";
+    cout << "6. Exit\n";
 
-    int choice = readInt("Choose (1-5): ", 1, 5);
+    int choice = readInt("Choose (1-6): ", 1, 6);
 
     if (choice == 1)
     {
@@ -265,12 +327,16 @@ int main()
     }
     else if (choice == 4)
     {
+      viewChecklist(episodes, count);
+    }
+    else if (choice == 5)
+    {
       cout << "Total episodes: "
            << PodcastEpisode::getTotalEpisodes() << '\n';
     }
     else
     {
-      cout << "Goodbye. Records are not saved after exit.\n";
+      cout << "Goodbye...\n";
       break;
     }
   }
