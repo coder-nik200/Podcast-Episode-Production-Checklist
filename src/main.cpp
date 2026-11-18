@@ -1,345 +1,489 @@
+
 #include <iostream>
 #include <string>
-#include <limits>
+#include <fstream>
+#include <cstring>
 using namespace std;
 
-const int MAX_EPISODES = 30;
-const int TASK_COUNT = 8;
+struct DiskEpisode
+{
+  int id;
+  char title[100];
+  char host[50];
+  char guest[50];
+  float duration;
+  char status;
+};
 
-const string TASK_NAMES[TASK_COUNT] = {
-    "Topic Research",
-    "Script Preparation",
-    "Guest Confirmation",
-    "Recording Completed",
-    "Audio Editing",
-    "Thumbnail Preparation",
-    "Final Review",
-    "Publishing"};
-
-class PodcastEpisode
+class Episode
 {
 private:
-  int episodeId = 0;
+  int id;
   string title;
   string host;
   string guest;
-  string recordingDate;
-  int durationMinutes = 0;
-  bool checklist[TASK_COUNT] = {};
+  float duration;
+  char status;
 
-  static int totalEpisodes;
+  static int cnt;
 
 public:
-  void setDetails(int id, const string &episodeTitle,
-                  const string &hostName,
-                  const string &guestName,
-                  const string &date,
-                  int duration)
+  Episode() : id(0), title(""), host(""), guest(""),
+              duration(0), status('P')
   {
-    this->episodeId = id;
-    title = episodeTitle;
-    host = hostName;
-    guest = guestName;
-    recordingDate = date;
-    durationMinutes = duration;
+  }
 
-    for (int i = 0; i < TASK_COUNT; i++)
+  Episode(int x, string t = "Untitled",
+          string h = "Not Assigned",
+          string g = "Not Assigned",
+          float d = 1.0, char s = 'P')
+      : id(x), title(t), host(h), guest(g),
+        duration(d), status(s)
+  {
+  }
+
+  Episode(const Episode &e)
+      : id(e.id), title(e.title), host(e.host),
+        guest(e.guest), duration(e.duration),
+        status(e.status)
+  {
+  }
+
+  ~Episode()
+  {
+  }
+
+  void setData(int &x)
+  {
+    string t, h, g;
+    float d;
+    char s;
+
+    cout << "Enter Episode Title: ";
+    getline(cin, t);
+
+    while (t.empty())
     {
-      checklist[i] = false;
+      cout << "Title cannot be empty. Enter again: ";
+      getline(cin, t);
     }
 
-    totalEpisodes++;
-  }
+    cout << "Enter Host Name: ";
+    getline(cin, h);
 
-  inline int getId() const
-  {
-    return episodeId;
-  }
-
-  inline string getTitle() const
-  {
-    return title;
-  }
-
-  static int getTotalEpisodes()
-  {
-    return totalEpisodes;
-  }
-
-  void showSummary() const
-  {
-    cout << "ID: " << episodeId
-         << " | Title: " << title
-         << " | Host: " << host << '\n';
-  }
-
-  void showDetails() const
-  {
-    cout << "\nEpisode ID: " << episodeId
-         << "\nTitle: " << title
-         << "\nHost: " << host
-         << "\nGuest: " << guest
-         << "\nRecording date: " << recordingDate
-         << "\nDuration: " << durationMinutes << " minutes\n";
-  }
-
-  void showChecklist() const
-  {
-    cout << "\nChecklist for Episode "
-         << episodeId << " (" << title << ")\n";
-
-    for (int i = 0; i < TASK_COUNT; i++)
+    while (h.empty())
     {
-      cout << i + 1 << ". ["
-           << (checklist[i] ? 'X' : ' ')
-           << "] " << TASK_NAMES[i] << '\n';
+      cout << "Host name cannot be empty. Enter again: ";
+      getline(cin, h);
     }
 
-    cout << "Checklist is read-only in CA1.\n";
+    cout << "Enter Guest Name: ";
+    getline(cin, g);
+
+    while (g.empty())
+    {
+      cout << "Guest name cannot be empty. Enter again: ";
+      getline(cin, g);
+    }
+
+    cout << "Enter Duration: ";
+    cin >> d;
+
+    while (cin.fail() || d <= 0)
+    {
+      cin.clear();
+      cin.ignore(10000, '\n');
+
+      cout << "Enter a valid duration: ";
+      cin >> d;
+    }
+
+    cout << "Enter Status (P/C): ";
+    cin >> s;
+
+    while (s != 'P' && s != 'p' &&
+           s != 'C' && s != 'c')
+    {
+      cout << "Enter P for Pending or C for Completed: ";
+      cin >> s;
+    }
+
+    cin.ignore(10000, '\n');
+
+    if (s == 'p')
+      s = 'P';
+
+    if (s == 'c')
+      s = 'C';
+
+    Episode temp(x, t, h, g, d, s);
+    Episode copy(temp);
+
+    *this = copy;
   }
 
-  friend void displayProductionStatus(const PodcastEpisode &episode);
+  inline int getId()
+  {
+    return id;
+  }
+
+  static int getCount()
+  {
+    return cnt;
+  }
+
+  static void increaseCount()
+  {
+    cnt++;
+  }
+
+  void toFile(DiskEpisode &r)
+  {
+    r.id = id;
+
+    strncpy(r.title, title.c_str(), 99);
+    r.title[99] = '\0';
+
+    strncpy(r.host, host.c_str(), 49);
+    r.host[49] = '\0';
+
+    strncpy(r.guest, guest.c_str(), 49);
+    r.guest[49] = '\0';
+
+    r.duration = duration;
+    r.status = status;
+  }
+
+  friend void show(Episode &e);
 };
 
-int PodcastEpisode::totalEpisodes = 0;
+int Episode::cnt = 0;
 
-void displayProductionStatus(const PodcastEpisode &episode)
+void show(Episode &e)
 {
-  int completed = 0;
+  cout << "\nEpisode ID: " << e.id;
+  cout << "\nTitle: " << e.title;
+  cout << "\nHost: " << e.host;
+  cout << "\nGuest: " << e.guest;
+  cout << "\nDuration: " << e.duration << " minutes";
+  cout << "\nStatus: ";
 
-  for (int i = 0; i < TASK_COUNT; i++)
-  {
-    if (episode.checklist[i])
-    {
-      completed++;
-    }
-  }
-
-  cout << "Production progress: "
-       << completed << "/" << TASK_COUNT
-       << " tasks complete\n";
-}
-
-int readInt(const string &prompt, int minimum, int maximum)
-{
-  int value;
-
-  while (true)
-  {
-    cout << prompt;
-
-    if (cin >> value && value >= minimum && value <= maximum)
-    {
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-      return value;
-    }
-
-    cout << "Invalid number. Enter a value from "
-         << minimum << " to " << maximum << ".\n";
-
-    cin.clear();
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-  }
-}
-
-string readText(const string &prompt)
-{
-  string value;
-
-  while (true)
-  {
-    cout << prompt;
-    getline(cin, value);
-
-    if (value.find_first_not_of(" \t\r\n") != string::npos)
-    {
-      return value;
-    }
-
-    cout << "This field cannot be empty.\n";
-  }
-}
-
-bool validDateFormat(const string &date)
-{
-  if (date.size() != 10 || date[4] != '-' || date[7] != '-')
-  {
-    return false;
-  }
-
-  for (int i = 0; i < 10; i++)
-  {
-    if (i == 4 || i == 7)
-      continue;
-
-    if (date[i] < '0' || date[i] > '9')
-      return false;
-  }
-
-  int month = (date[5] - '0') * 10 + (date[6] - '0');
-  int day = (date[8] - '0') * 10 + (date[9] - '0');
-
-  return month >= 1 && month <= 12 &&
-         day >= 1 && day <= 31;
-}
-
-string readDate()
-{
-  while (true)
-  {
-    string date = readText("Recording date (YYYY-MM-DD): ");
-
-    if (validDateFormat(date))
-    {
-      return date;
-    }
-
-    cout << "Invalid date format or month/day range.\n";
-  }
-}
-
-PodcastEpisode *findEpisode(PodcastEpisode episodes[], int count, int id)
-{
-  for (int i = 0; i < count; i++)
-  {
-    if (episodes[i].getId() == id)
-    {
-      return &episodes[i];
-    }
-  }
-
-  return nullptr;
-}
-
-void addEpisode(PodcastEpisode episodes[], int &count)
-{
-  if (count >= MAX_EPISODES)
-  {
-    cout << "Storage full. Maximum "
-         << MAX_EPISODES << " episodes.\n";
-    return;
-  }
-
-  int id = readInt("Unique Episode ID (1-999999): ", 1, 999999);
-
-  if (findEpisode(episodes, count, id) != nullptr)
-  {
-    cout << "Duplicate Episode ID. Nothing was added.\n";
-    return;
-  }
-
-  string title = readText("Episode title: ");
-  string host = readText("Host name: ");
-  string guest = readText("Guest name (enter None if not applicable): ");
-
-  string date = readDate();
-
-  int duration = readInt("Duration in minutes (1-1440): ", 1, 1440);
-
-  episodes[count].setDetails(
-      id, title, host, guest, date, duration);
-
-  count++;
-
-  cout << "\nEpisode created successfully.\n";
-}
-
-void viewAll(const PodcastEpisode episodes[], int count)
-{
-  if (count == 0)
-  {
-    cout << "No episodes found.\n";
-    return;
-  }
-
-  cout << "\nAll Episodes:\n";
-
-  for (int i = 0; i < count; i++)
-  {
-    episodes[i].showSummary();
-  }
-}
-
-void viewEpisodeDetails(PodcastEpisode episodes[], int count)
-{
-  int id = readInt("Enter Episode ID: ", 1, 999999);
-
-  PodcastEpisode *found = findEpisode(episodes, count, id);
-
-  if (found == nullptr)
-  {
-    cout << "Episode not found.\n";
-  }
+  if (e.status == 'P')
+    cout << "Pending";
   else
-  {
-    found->showDetails();
-  }
-}
+    cout << "Completed";
 
-void viewChecklist(PodcastEpisode episodes[], int count)
-{
-  int id = readInt("Enter Episode ID: ", 1, 999999);
-
-  PodcastEpisode *found = findEpisode(episodes, count, id);
-
-  if (found == nullptr)
-  {
-    cout << "Episode not found.\n";
-  }
-  else
-  {
-    found->showChecklist();
-
-    displayProductionStatus(*found);
-  }
+  cout << "\n-----------------------------\n";
 }
 
 int main()
 {
-  PodcastEpisode episodes[MAX_EPISODES];
+  Episode arr[30];
+  Episode *ptr = arr;
 
-  int count = 0;
+  int choice, x, flag, found;
 
-  while (true)
+  fstream file("episodes.dat", ios::in | ios::binary);
+
+  if (file.is_open())
   {
-    cout << "\n===== PODCAST EPISODE PRODUCTION CHECKLIST =====\n";
+    DiskEpisode r;
 
-    cout << "1. Add new episode\n";
-    cout << "2. View all episodes\n";
-    cout << "3. View episode details\n";
-    cout << "4. View production checklist\n";
-    cout << "5. View total episodes\n";
+    while (file.read((char *)&r, sizeof(r)))
+    {
+      if (Episode::getCount() >= 30)
+        break;
+
+      Episode temp(r.id, string(r.title),
+                   string(r.host), string(r.guest),
+                   r.duration, r.status);
+
+      Episode copy(temp);
+
+      arr[Episode::getCount()] = copy;
+
+      Episode::increaseCount();
+    }
+
+    file.close();
+  }
+
+  do
+  {
+    cout << "\n===== PRODCAST EPISODE PRODUCTION CHECKLIST =====\n";
+    cout << "1. Add Episode\n";
+    cout << "2. Display All Episodes\n";
+    cout << "3. Search Episode\n";
+    cout << "4. Update Episode\n";
+    cout << "5. File Pointer Information\n";
     cout << "6. Exit\n";
 
-    int choice = readInt("Choose (1-6): ", 1, 6);
+    cout << "Enter your choice: ";
 
-    if (choice == 1)
+    if (!(cin >> choice))
     {
-      addEpisode(episodes, count);
+      cin.clear();
+      cin.ignore(10000, '\n');
+      cout << "Invalid input. Enter a number.\n";
+      continue;
     }
-    else if (choice == 2)
+
+    switch (choice)
     {
-      viewAll(episodes, count);
-    }
-    else if (choice == 3)
+    case 1:
     {
-      viewEpisodeDetails(episodes, count);
-    }
-    else if (choice == 4)
-    {
-      viewChecklist(episodes, count);
-    }
-    else if (choice == 5)
-    {
-      cout << "Total episodes: "
-           << PodcastEpisode::getTotalEpisodes() << '\n';
-    }
-    else
-    {
-      cout << "Goodbye...\n";
+      if (Episode::getCount() >= 30)
+      {
+        cout << "Episode storage is full.\n";
+        break;
+      }
+
+      cout << "Enter Episode ID: ";
+
+      if (!(cin >> x))
+      {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Invalid ID.\n";
+        break;
+      }
+
+      if (x <= 0)
+      {
+        cout << "ID must be positive.\n";
+        break;
+      }
+
+      flag = 0;
+
+      for (int i = 0; i < Episode::getCount(); i++)
+      {
+        if (ptr[i].getId() == x)
+        {
+          flag = 1;
+          break;
+        }
+      }
+
+      if (flag == 1)
+      {
+        cout << "Episode ID already exists.\n";
+        break;
+      }
+
+      cin.ignore(10000, '\n');
+
+      (ptr + Episode::getCount())->setData(x);
+
+      DiskEpisode r;
+      (ptr + Episode::getCount())->toFile(r);
+
+      fstream file("episodes.dat",
+                   ios::out | ios::binary | ios::app);
+
+      if (file.is_open())
+      {
+        file.write((char *)&r, sizeof(r));
+
+        if (file)
+        {
+          Episode::increaseCount();
+          cout << "Episode added successfully.\n";
+        }
+        else
+        {
+          cout << "Error writing episode.\n";
+        }
+
+        file.close();
+      }
+      else
+      {
+        cout << "Unable to open file.\n";
+      }
+
       break;
     }
-  }
+
+    case 2:
+    {
+      if (Episode::getCount() == 0)
+      {
+        cout << "No episodes available.\n";
+        break;
+      }
+
+      cout << "\n===== ALL EPISODES =====\n";
+
+      for (int i = 0; i < Episode::getCount(); i++)
+      {
+        show(ptr[i]);
+      }
+
+      cout << "Total Episodes: "
+           << Episode::getCount() << endl;
+
+      break;
+    }
+
+    case 3:
+    {
+      cout << "Enter Episode ID to search: ";
+
+      if (!(cin >> x))
+      {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Invalid ID.\n";
+        break;
+      }
+
+      found = 0;
+
+      fstream file("episodes.dat", ios::in | ios::binary);
+
+      if (file.is_open())
+      {
+        DiskEpisode r;
+
+        for (int i = 0; i < Episode::getCount(); i++)
+        {
+          file.seekg(i * sizeof(r), ios::beg);
+
+          if (file.read((char *)&r, sizeof(r)))
+          {
+            if (r.id == x)
+            {
+              show(ptr[i]);
+              found = 1;
+              break;
+            }
+          }
+        }
+
+        file.close();
+      }
+      else
+      {
+        cout << "Unable to open file.\n";
+        break;
+      }
+
+      if (found == 0)
+        cout << "Episode not found.\n";
+
+      break;
+    }
+
+    case 4:
+    {
+      cout << "Enter Episode ID to update: ";
+
+      if (!(cin >> x))
+      {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Invalid ID.\n";
+        break;
+      }
+
+      found = 0;
+
+      fstream file("episodes.dat",
+                   ios::in | ios::out | ios::binary);
+
+      if (file.is_open())
+      {
+        DiskEpisode r;
+
+        for (int i = 0; i < Episode::getCount(); i++)
+        {
+          file.seekg(i * sizeof(r), ios::beg);
+
+          if (file.read((char *)&r, sizeof(r)))
+          {
+            if (r.id == x)
+            {
+              found = 1;
+
+              cout << "\nEnter updated details:\n";
+
+              (ptr + i)->setData(x);
+
+              (ptr + i)->toFile(r);
+
+              file.clear();
+
+              file.seekp(i * sizeof(r), ios::beg);
+
+              file.write((char *)&r, sizeof(r));
+
+              if (file)
+                cout << "Episode updated successfully.\n";
+              else
+                cout << "Error updating episode.\n";
+
+              break;
+            }
+          }
+        }
+
+        file.close();
+      }
+      else
+      {
+        cout << "Unable to open file.\n";
+        break;
+      }
+
+      if (found == 0)
+        cout << "Episode not found.\n";
+
+      break;
+    }
+
+    case 5:
+    {
+      fstream file("episodes.dat", ios::in | ios::binary);
+
+      if (file.is_open())
+      {
+        cout << "Initial input pointer: "
+             << file.tellg() << endl;
+
+        file.seekg(0, ios::end);
+
+        cout << "Total file size: "
+             << file.tellg() << " bytes\n";
+
+        file.seekg(0, ios::beg);
+
+        cout << "Input pointer after seekg: "
+             << file.tellg() << endl;
+
+        file.close();
+      }
+      else
+      {
+        cout << "Unable to open file.\n";
+      }
+
+      break;
+    }
+
+    case 6:
+    {
+      cout << "Exiting program...\n";
+      break;
+    }
+
+    default:
+    {
+      cout << "Invalid choice. Try again.\n";
+    }
+    }
+
+  } while (choice != 6);
 
   return 0;
 }
